@@ -41,6 +41,7 @@ import java.util.StringTokenizer;
  */
 public final class NewDriver {
 
+    // 定义静态变量
     private static final String CLASSPATH_SEPARATOR = File.pathSeparator;
 
     private static final String OS_NAME = System.getProperty("os.name");// $NON-NLS-1$
@@ -61,17 +62,19 @@ public final class NewDriver {
     private static final List<Exception> EXCEPTIONS_IN_INIT = new ArrayList<>();
 
     static {
+        // jmeter相关jar包完全路径
         final List<URL> jars = new LinkedList<>();
         final String initiaClasspath = System.getProperty(JAVA_CLASS_PATH);
 
+        // 查找jmeter安装路径，区分安装系统环境
         // Find JMeter home dir from the initial classpath
         String tmpDir;
         StringTokenizer tok = new StringTokenizer(initiaClasspath, File.pathSeparator);
         if (tok.countTokens() == 1
                 || (tok.countTokens()  == 2 // Java on Mac OS can add a second entry to the initial classpath
-                    && OS_NAME_LC.startsWith("mac os x")// $NON-NLS-1$
-                   )
-           ) {
+                && OS_NAME_LC.startsWith("mac os x")// $NON-NLS-1$
+        )
+        ) {
             File jar = new File(tok.nextToken());
             try {
                 tmpDir = jar.getCanonicalFile().getParentFile().getParent();
@@ -83,6 +86,8 @@ public final class NewDriver {
             if (tmpDir.length() == 0) {
                 File userDir = new File(System.getProperty("user.dir"));// $NON-NLS-1$
                 tmpDir = userDir.getAbsoluteFile().getParent();
+                // idea中启动获取到的userDir为工程根目录
+//                tmpDir = userDir.getAbsoluteFile().getAbsolutePath();
             }
         }
         JMETER_INSTALLATION_DIRECTORY=tmpDir;
@@ -127,6 +132,7 @@ public final class NewDriver {
             }
         }
 
+        // 通过类加载器DynamicClassLoader加载安装路径下所有的jar包
         // ClassFinder needs the classpath
         System.setProperty(JAVA_CLASS_PATH, initiaClasspath + classpath.toString());
         loader = AccessController.doPrivileged(
@@ -246,10 +252,14 @@ public final class NewDriver {
                 if(System.getProperty(HEADLESS_MODE_PROPERTY) == null && shouldBeHeadless(args)) {
                     System.setProperty(HEADLESS_MODE_PROPERTY, "true");
                 }
+                // org.apache.jmeter.JMeter
                 Class<?> initialClass = loader.loadClass("org.apache.jmeter.JMeter");// $NON-NLS-1$
                 Object instance = initialClass.getDeclaredConstructor().newInstance();
                 Method startup = initialClass.getMethod("start", new Class[] { new String[0].getClass() });// $NON-NLS-1$
                 startup.invoke(instance, new Object[] { args });
+
+                System.out.println("classLoader: " + initialClass.getClassLoader());
+
             } catch(Throwable e){ // NOSONAR We want to log home directory in case of exception
                 e.printStackTrace(); // NOSONAR No logger at this step
                 System.err.println("JMeter home directory was detected as: "+JMETER_INSTALLATION_DIRECTORY); // NOSONAR Intentional System.err use
@@ -268,7 +278,7 @@ public final class NewDriver {
             PrintWriter printWriter = new PrintWriter(stringWriter);
             exception.printStackTrace(printWriter); // NOSONAR
             builder.append(stringWriter.toString())
-                .append("\r\n");
+                    .append("\r\n");
         }
         return builder.toString();
     }
