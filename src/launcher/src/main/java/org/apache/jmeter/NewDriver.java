@@ -82,6 +82,7 @@ public final class NewDriver {
                 tmpDir = null;
             }
         } else {// e.g. started from IDE with full classpath
+            // 设置JMETER_HOME, vm options添加-Djmeter.home=G:\IdeaProjects\jmeter_source_code_learning
             tmpDir = System.getProperty("jmeter.home","");// Allow override $NON-NLS-1$ $NON-NLS-2$
             if (tmpDir.length() == 0) {
                 File userDir = new File(System.getProperty("user.dir"));// $NON-NLS-1$
@@ -90,8 +91,7 @@ public final class NewDriver {
 //                tmpDir = userDir.getAbsoluteFile().getAbsolutePath();
             }
         }
-        JMETER_INSTALLATION_DIRECTORY=tmpDir;
-
+        JMETER_INSTALLATION_DIRECTORY=tmpDir; // JMETER源码目录
         /*
          * Does the system support UNC paths? If so, may need to fix them up
          * later
@@ -132,9 +132,14 @@ public final class NewDriver {
             }
         }
 
-        // 通过类加载器DynamicClassLoader加载安装路径下所有的jar包
+        // 通过类加载器DynamicClassLoader加载lib路径下所有的jar包
         // ClassFinder needs the classpath
         System.setProperty(JAVA_CLASS_PATH, initiaClasspath + classpath.toString());
+
+//        for (URL url : jars.toArray(new URL[jars.size()])) {
+//            System.out.println("jars.toArray content: " + url.toString());
+//        }
+
         loader = AccessController.doPrivileged(
                 (PrivilegedAction<DynamicClassLoader>) () ->
                         new DynamicClassLoader(jars.toArray(new URL[jars.size()]))
